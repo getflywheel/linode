@@ -22,7 +22,7 @@ class Linode
       define_method(namespace.to_sym) do ||
         lookup = instance_variable_get("@#{namespace}")
         return lookup if lookup
-        subclass = self.class.const_get(namespace.to_s.capitalize).new(:api_key => api_key, :api_url => api_url)
+        subclass = self.class.const_get(namespace.to_s.capitalize).new(:api_key => api_key, :api_url => api_url, :api_domain => api_domain)
         instance_variable_set("@#{namespace}", subclass)
         subclass
       end
@@ -56,6 +56,7 @@ class Linode
 
   def initialize(args)
     @api_url = args[:api_url] if args[:api_url]
+    @api_domain = args[:api_domain] if args[:api_domain]
     @logger = args[:logger]
 
     if args.include?(:api_key)
@@ -70,6 +71,10 @@ class Linode
 
   def api_url
     @api_url || 'https://api.linode.com/'
+  end
+
+  def api_domain
+    @api_domain
   end
 
   def api_key
@@ -93,7 +98,12 @@ class Linode
 
   def post(data)
     logger.info "POST #{api_url.to_s} body:#{data.inspect}" if logger
-    HTTParty.post(api_url, :body => data, :verify => false).parsed_response
+    HTTParty.post(api_url, :body => data, :headers => headers, :verify => false).parsed_response
+  end
+
+  def headers
+      return {} if api_domain.nil?
+      {"host" => api_domain}
   end
 
   def error?(response)
