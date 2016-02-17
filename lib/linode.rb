@@ -107,6 +107,7 @@ class Linode
   end
 
   def error?(response)
+    response["ERRORARRAY"].delete_if { |e| e["ERRORCODE"] == 0} # Removing Code 0 - OK nonerrors.
     response and response["ERRORARRAY"] and ! response["ERRORARRAY"].empty?
   end
 
